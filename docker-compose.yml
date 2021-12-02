@@ -1,0 +1,68 @@
+version: '3.9'
+services:
+  micro-service-game-mongodb:
+    image: mongo:latest
+    container_name: micro-service-game-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_DATABASE=${MONGODB_DATABASE}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+    volumes: 
+      - ./data/micro-service-game-mongodb:/data/db
+    networks:
+      - micro-service
+  micro-service-user-mongodb:
+    image: mongo:latest
+    container_name: micro-service-user-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_DATABASE=${MONGODB_DATABASE}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+    volumes:
+      - ./data/micro-service-user-mongodb:/data/db
+    networks:
+      - micro-service
+  culture-general:
+    build: project/cultureGeneralFront
+    container_name: culture-general
+    ports:
+      - "80:8080"
+    networks:
+      - micro-service
+  micro-service-game:
+    build: project/microServicePartie
+    container_name: micro-service-game
+    ports:
+      - "3000:3000"
+    depends_on:
+      - micro-service-game-mongodb
+    volumes:
+      - ./config/micro-service.env:/app/.env
+    networks:
+      - micro-service
+  micro-service-user:
+    build: project/microServiceUtilisateur
+    container_name: micro-service-user
+    ports:
+      - "3001:3000"
+    depends_on:
+      - micro-service-user-mongodb
+    volumes:
+      - ./config/micro-service.env:/app/.env
+    networks:
+      - micro-service
+  micro-service-stat:
+    build: project/microServiceStatistique
+    container_name: micro-service-stat
+    ports:
+      - "3002:3000"
+    networks:
+      - micro-service
+  rabbitmq:
+    image: rabbitmq:3.9-management-alpine
+    container_name: rabbitmq
+    networks:
+      - micro-service
+networks:
+  micro-service:
+    driver: bridge
